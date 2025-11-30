@@ -61,12 +61,13 @@ open http://localhost:5173
 ```bash
 cd backend
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
-pip install -r requirements.txt
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 
 # Copy environment file
 cp .env.example .env
@@ -96,7 +97,7 @@ npm run dev
 
 ```bash
 cd backend
-pip install -r requirements.txt
+uv pip install -e '.[test]'
 pytest -v
 ```
 

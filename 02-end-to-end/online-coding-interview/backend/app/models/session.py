@@ -24,13 +24,7 @@ class Session(Base):
         default=datetime.utcnow,
     )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    
-    @property
-    def is_protected(self) -> bool:
-        """Check if session requires a password."""
-        return self.password_hash is not None
     
     @property
     def is_expired(self) -> bool:

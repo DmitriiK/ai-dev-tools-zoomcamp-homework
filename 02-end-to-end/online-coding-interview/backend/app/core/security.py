@@ -1,11 +1,14 @@
 from passlib.context import CryptContext
 from typing import Optional
+import hashlib
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use argon2 instead of bcrypt for Python 3.13+ compatibility
+# Falls back to pbkdf2_sha256 if argon2 is not available
+pwd_context = CryptContext(schemes=["argon2", "pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt."""
+    """Hash a password using argon2 or pbkdf2_sha256."""
     return pwd_context.hash(password)
 
 

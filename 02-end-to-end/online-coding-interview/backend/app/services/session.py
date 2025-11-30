@@ -5,7 +5,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.session import Session
 from app.schemas.session import SessionCreate, SessionUpdate
-from app.core.security import hash_password
 
 
 class SessionService:
@@ -20,16 +19,11 @@ class SessionService:
         if data.expires_in_hours:
             expires_at = datetime.utcnow() + timedelta(hours=data.expires_in_hours)
         
-        password_hash = None
-        if data.password:
-            password_hash = hash_password(data.password)
-        
         session = Session(
             title=data.title,
             language=data.language.value,
             code=data.initial_code,
             expires_at=expires_at,
-            password_hash=password_hash,
         )
         
         self.db.add(session)
