@@ -1,0 +1,517 @@
+openapi: 3.0.3
+info:
+  title: Online Coding Interview Platform API
+  description: |
+    REST API for the Online Coding Interview Platform.
+    
+    This API provides endpoints for:
+    - Creating and managing interview sessions
+    - Retrieving supported languages and their configurations
+    - Managing session participants
+    
+    **Code Execution:**
+    For security reasons, all code execution happens client-side in the browser:
+    - JavaScript: Native execution in Web Workers
+    - Python: Executed via Pyodide (CPython compiled to WebAssembly)
+    - C#: Executed via Blazor WebAssembly (.NET runtime)
+    - Go: Executed via TinyGo WebAssembly
+    - Java: Executed via CheerpJ (JVM in WebAssembly)
+    
+    The server NEVER executes user code, eliminating server-side code injection risks.
+    
+    Real-time collaboration features (code sync, cursor sharing, presence) 
+    are handled via WebSocket connections (Socket.IO) and are not covered 
+    in this REST API specification.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.example.com/api
+    description: Production server
+
+tags:
+  - name: Sessions
+    description: Interview session management
+  - name: Languages
+    description: Supported programming languages
+
+paths:
+  /sessions:
+    post:
+      tags:
+        - Sessions
+      summary: Create a new interview session
+      description: |
+        Creates a new coding interview session and returns a unique session ID 
+        that can be shared with candidates.
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+            examples:
+              basic:
+                summary: Basic session
+                value:
+                  title: "Frontend Developer Interview"
+                  language: "javascript"
+              withExpiration:
+                summary: Session with expiration
+                value:
+                  title: "Python Coding Challenge"
+                  language: "python"
+                  expires_in_hours: 24
+              protected:
+                summary: Password protected session
+                value:
+                  title: "Senior Engineer Interview"
+                  language: "python"
+                  password: "secret123"
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /sessions/{session_id}:
+    get:
+      tags:
+        - Sessions
+      summary: Get session details
+      description: Retrieves the details of an existing session by its ID.
+      operationId: getSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: password
+          in: query
+          description: Password for protected sessions
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Password required or incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Password required for this session"
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Session not found"
+        '410':
+          description: Session has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Session has expired"
+
+    patch:
+      tags:
+        - Sessions
+      summary: Update session details
+      description: Updates the mutable properties of an existing session.
+      operationId: updateSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionUpdate'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+    delete:
+      tags:
+        - Sessions
+      summary: Delete a session
+      description: Permanently deletes a session and all associated data.
+      operationId: deleteSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204':
+          description: Session deleted successfully
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/{session_id}/participants:
+    get:
+      tags:
+        - Sessions
+      summary: Get session participants
+      description: Returns a list of currently connected participants in the session.
+      operationId: getParticipants
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: List of participants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participant'
+                  count:
+                    type: integer
+                    description: Total number of participants
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /languages:
+    get:
+      tags:
+        - Languages
+      summary: Get supported languages
+      description: Returns a list of all supported programming languages with their configurations.
+      operationId: getLanguages
+      responses:
+        '200':
+          description: List of supported languages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  languages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Language'
+              example:
+                languages:
+                  - id: javascript
+                    name: JavaScript
+                    version: "ES2022"
+                    execution_mode: browser
+                    file_extension: .js
+                    monaco_language: javascript
+                    runtime: "Web Worker"
+                  - id: python
+                    name: Python
+                    version: "3.11 (Pyodide)"
+                    execution_mode: browser
+                    file_extension: .py
+                    monaco_language: python
+                    runtime: "Pyodide WASM"
+                  - id: csharp
+                    name: "C#"
+                    version: ".NET 8"
+                    execution_mode: browser
+                    file_extension: .cs
+                    monaco_language: csharp
+                    runtime: "Blazor WASM"
+                  - id: go
+                    name: Go
+                    version: "1.21 (TinyGo)"
+                    execution_mode: browser
+                    file_extension: .go
+                    monaco_language: go
+                    runtime: "TinyGo WASM"
+                  - id: java
+                    name: Java
+                    version: "11 (CheerpJ)"
+                    execution_mode: browser
+                    file_extension: .java
+                    monaco_language: java
+                    runtime: "CheerpJ WASM"
+
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Returns the health status of the API and its dependencies.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              example:
+                status: healthy
+                version: "1.0.0"
+                timestamp: "2024-01-15T10:30:00Z"
+                services:
+                  database: healthy
+                  redis: healthy
+
+components:
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      description: Unique session identifier (UUID)
+      schema:
+        type: string
+        format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    SessionCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Human-readable session title
+          minLength: 1
+          maxLength: 255
+          example: "Frontend Developer Interview"
+        language:
+          type: string
+          description: Default programming language for the session
+          enum: [javascript, python, csharp, go, java]
+          default: javascript
+        initial_code:
+          type: string
+          description: Pre-populated code content
+          default: ""
+          example: "// Write your solution here\n"
+        expires_in_hours:
+          type: integer
+          description: Hours until session expires (null for no expiration)
+          minimum: 1
+          maximum: 168
+          nullable: true
+          example: 24
+        password:
+          type: string
+          description: Optional password to protect the session
+          minLength: 4
+          maxLength: 128
+          nullable: true
+      required:
+        - title
+
+    SessionUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        language:
+          type: string
+          enum: [javascript, python, csharp, go, java]
+        code:
+          type: string
+          description: Current code content
+
+    SessionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique session identifier
+        title:
+          type: string
+        language:
+          type: string
+        code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_protected:
+          type: boolean
+          description: Whether the session requires a password
+        is_active:
+          type: boolean
+        share_url:
+          type: string
+          format: uri
+          description: URL to share with candidates
+      required:
+        - id
+        - title
+        - language
+        - code
+        - created_at
+        - is_protected
+        - is_active
+        - share_url
+
+    Participant:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique participant identifier
+        name:
+          type: string
+          description: Display name
+        color:
+          type: string
+          description: Assigned cursor color (hex)
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        cursor_position:
+          type: object
+          properties:
+            line:
+              type: integer
+            column:
+              type: integer
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+
+    Language:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Language identifier
+        name:
+          type: string
+          description: Display name
+        version:
+          type: string
+          description: Supported version
+        execution_mode:
+          type: string
+          enum: [browser]
+          description: Where code is executed (always browser for security)
+        runtime:
+          type: string
+          description: Runtime environment (e.g., "Web Worker", "Pyodide WASM")
+        file_extension:
+          type: string
+        monaco_language:
+          type: string
+          description: Monaco Editor language ID
+      required:
+        - id
+        - name
+        - execution_mode
+        - runtime
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [healthy, unhealthy]
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+      required:
+        - detail
+
+    ValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+                description: Location of the error
+              msg:
+                type: string
+                description: Error message
+              type:
+                type: string
+                description: Error type
+
+  securitySchemes:
+    sessionToken:
+      type: apiKey
+      in: header
+      name: X-Session-Token
+      description: Token received after joining a session
