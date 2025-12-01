@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Language } from '../../types';
 
@@ -102,6 +103,13 @@ export default function CodeEditor({ code, language, onChange }: CodeEditorProps
   const handleEditorChange = (value: string | undefined) => {
     onChange(value || '');
   };
+
+  // Initialize store with template if code is empty
+  useEffect(() => {
+    if (!code && CODE_TEMPLATES[language]) {
+      onChange(CODE_TEMPLATES[language]);
+    }
+  }, [language]); // Only run when language changes or on mount
 
   // Use template if code is empty
   const displayCode = code || CODE_TEMPLATES[language] || '';

@@ -16,8 +16,13 @@ class SocketService {
   private sessionId: string | null = null;
   
   connect(): void {
-    if (this.socket?.connected) return;
+    console.log('SocketService.connect() called, current socket:', this.socket?.connected ? 'connected' : 'disconnected');
+    if (this.socket?.connected) {
+      console.log('Socket already connected, skipping');
+      return;
+    }
     
+    console.log('Creating new socket connection...');
     this.socket = io({
       path: '/socket.io',
       transports: ['websocket', 'polling'],
@@ -46,6 +51,7 @@ class SocketService {
   }
   
   joinSession(sessionId: string, userName?: string): void {
+    console.log('joinSession() called for session:', sessionId, 'socket connected:', this.socket?.connected);
     this.sessionId = sessionId;
     this.socket?.emit('join', {
       session_id: sessionId,
@@ -126,7 +132,17 @@ class SocketService {
   }
   
   onConnect(callback: () => void): void {
+    console.log('onConnect() called, socket status:', this.socket?.connected ? 'connected' : 'not connected');
     this.socket?.on('connect', callback);
+    // If already connected, call callback immediately
+    if (this.socket?.connected) {
+      console.log('Socket already connected, calling callback immediately');
+      callback();
+    }
+  }
+  
+  offConnect(callback: () => void): void {
+    this.socket?.off('connect', callback);
   }
   
   onDisconnect(callback: () => void): void {

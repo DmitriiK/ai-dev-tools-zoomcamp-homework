@@ -20,6 +20,7 @@ class SessionCreate(BaseModel):
     language: Language = Language.JAVASCRIPT
     initial_code: str = Field(default="", max_length=100000)
     expires_in_hours: Optional[int] = Field(default=None, ge=1, le=168)
+    password: Optional[str] = Field(default=None, min_length=4, max_length=128)
 
 
 class SessionUpdate(BaseModel):
@@ -39,6 +40,7 @@ class SessionResponse(BaseModel):
     code: str
     created_at: datetime
     expires_at: Optional[datetime]
+    is_protected: bool
     is_active: bool
     share_url: str
 

@@ -1,6 +1,7 @@
 // JavaScript Web Worker for code execution
 self.onmessage = async (e: MessageEvent) => {
   const { code, id } = e.data;
+  console.log('JS Worker received:', { id, codeLength: code?.length });
   
   const startTime = performance.now();
   let stdout = '';
@@ -55,7 +56,7 @@ self.onmessage = async (e: MessageEvent) => {
   
   const executionTimeMs = Math.round(performance.now() - startTime);
   
-  self.postMessage({
+  const resultData = {
     id,
     result: {
       stdout,
@@ -63,5 +64,8 @@ self.onmessage = async (e: MessageEvent) => {
       exitCode,
       executionTimeMs,
     },
-  });
+  };
+  
+  console.log('JS Worker sending result:', resultData);
+  self.postMessage(resultData);
 };

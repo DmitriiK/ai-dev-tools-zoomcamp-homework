@@ -41,6 +41,11 @@ A real-time collaborative coding interview platform built with React, TypeScript
 - Node.js 20+ (for local development)
 - Python 3.11+ (for local development)
 
+**Note for Colima users:** If you encounter DNS issues when pulling images, restart Colima with proper DNS:
+```bash
+colima stop && colima start --dns 8.8.8.8
+```
+
 ### Quick Start with Docker
 
 ```bash
@@ -61,13 +66,12 @@ open http://localhost:5173
 ```bash
 cd backend
 
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Create virtual environment and install dependencies
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e .
+# Install dependencies
+pip install -r requirements.txt
 
 # Copy environment file
 cp .env.example .env
@@ -97,7 +101,7 @@ npm run dev
 
 ```bash
 cd backend
-uv pip install -e '.[test]'
+pip install -r requirements.txt
 pytest -v
 ```
 

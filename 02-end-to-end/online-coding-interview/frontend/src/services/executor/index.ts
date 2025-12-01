@@ -26,12 +26,15 @@ function getJavaScriptWorker(): Worker {
     );
     
     jsWorker.onmessage = (e) => {
+      console.log('JS worker response:', e.data);
       const { id, result } = e.data;
       const pending = pendingExecutions.get(id);
       if (pending) {
         clearTimeout(pending.timeout);
         pendingExecutions.delete(id);
         pending.resolve(result);
+      } else {
+        console.warn('No pending execution found for id:', id);
       }
     };
     
@@ -46,7 +49,7 @@ function getPythonWorker(): Worker {
   if (!pyWorker) {
     pyWorker = new Worker(
       new URL('./python-worker.ts', import.meta.url),
-      { type: 'classic' } // Classic worker for importScripts
+      { type: 'module' }
     );
     
     pyWorker.onmessage = (e) => {
@@ -71,14 +74,13 @@ function getPythonWorker(): Worker {
   return pyWorker;
 }
 
-export async function executeCode(
-  code: string,
-  language: Language
-): Promise<ExecutionResult> {
+export async function executeCode(code: string, language: Language): Promise<ExecutionResult> {
   const id = generateId();
+  console.log('executeCode called:', { id, language, codeLength: code.length });
   
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
+      console.log('Execution timeout for:', id);
       pendingExecutions.delete(id);
       resolve({
         stdout: '',
@@ -92,6 +94,7 @@ export async function executeCode(
     
     switch (language) {
       case 'javascript':
+        console.log('Posting to JS worker:', { code, id });
         getJavaScriptWorker().postMessage({ code, id });
         break;
       

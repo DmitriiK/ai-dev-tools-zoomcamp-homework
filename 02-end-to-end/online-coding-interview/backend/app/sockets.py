@@ -71,7 +71,7 @@ async def join(sid, data):
     redis = await get_redis()
     
     # Join the Socket.IO room
-    sio.enter_room(sid, session_id)
+    await sio.enter_room(sid, session_id)
     
     # Store user info in Redis
     user_data = {
@@ -126,7 +126,7 @@ async def leave(sid, data):
     """Handle user leaving a session."""
     session_id = data.get("session_id")
     if session_id:
-        sio.leave_room(sid, session_id)
+        await sio.leave_room(sid, session_id)
         
         redis = await get_redis()
         await redis.srem(f"session:{session_id}:participants", sid)

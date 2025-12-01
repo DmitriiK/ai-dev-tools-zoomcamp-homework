@@ -42,6 +42,52 @@ export default function SessionPage() {
     reset,
   } = useSessionStore();
 
+  const setupSocketListeners = useCallback(() => {
+    console.log('Setting up socket listeners');
+    
+    socketService.onConnect(() => {
+      console.log('Socket connect event - setting connected to true');
+      setConnected(true);
+    });
+    
+    socketService.onDisconnect(() => {
+      console.log('Socket disconnect event - setting connected to false');
+      setConnected(false);
+    });
+    
+    socketService.onSessionState((data) => {
+      console.log('Received session_state:', data);
+      setCode(data.code);
+      setLanguage(data.language as Language);
+      setParticipants(data.participants);
+      setCurrentUser(data.your_id, data.your_color);
+    });
+    
+    socketService.onCodeChange((data) => {
+      console.log('Received code_change from user:', data.user_id);
+      setCode(data.code);
+    });
+    
+    socketService.onLanguageChange((data) => {
+      console.log('Received language_change:', data.language);
+      setLanguage(data.language);
+    });
+    
+    socketService.onUserJoined((participant) => {
+      console.log('User joined:', participant);
+      addParticipant(participant);
+    });
+    
+    socketService.onUserLeft((data) => {
+      console.log('User left:', data.user_id);
+      removeParticipant(data.user_id);
+    });
+    
+    socketService.onCursorMove((data) => {
+      updateParticipantCursor(data.user_id, data.position);
+    });
+  }, [setConnected, setCode, setLanguage, setParticipants, setCurrentUser, addParticipant, removeParticipant, updateParticipantCursor]);
+
   const loadSession = useCallback(async (password?: string) => {
     if (!sessionId) return;
     
@@ -54,9 +100,21 @@ export default function SessionPage() {
       setShowPasswordModal(false);
       setPasswordError(null);
       
-      // Connect to WebSocket
+      // Connect to WebSocket and setup listeners
       socketService.connect();
-      socketService.joinSession(sessionId);
+      setupSocketListeners();
+      
+      // Join session when connected
+      if (socketService.isConnected()) {
+        socketService.joinSession(sessionId);
+      } else {
+        const joinOnConnect = () => {
+          console.log('Connected, now joining session');
+          socketService.joinSession(sessionId);
+          socketService.offConnect(joinOnConnect);
+        };
+        socketService.onConnect(joinOnConnect);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load session';
       
@@ -69,7 +127,7 @@ export default function SessionPage() {
     } finally {
       setLoading(false);
     }
-  }, [sessionId, setSession, setLoading, setError]);
+  }, [sessionId, setSession, setLoading, setError, setupSocketListeners]);
 
   // Load session on mount
   useEffect(() => {
@@ -80,44 +138,6 @@ export default function SessionPage() {
       reset();
     };
   }, [loadSession, reset]);
-
-  // Setup socket event listeners
-  useEffect(() => {
-    socketService.onConnect(() => {
-      setConnected(true);
-    });
-    
-    socketService.onDisconnect(() => {
-      setConnected(false);
-    });
-    
-    socketService.onSessionState((data) => {
-      setCode(data.code);
-      setLanguage(data.language as Language);
-      setParticipants(data.participants);
-      setCurrentUser(data.your_id, data.your_color);
-    });
-    
-    socketService.onCodeChange((data) => {
-      setCode(data.code);
-    });
-    
-    socketService.onLanguageChange((data) => {
-      setLanguage(data.language);
-    });
-    
-    socketService.onUserJoined((participant) => {
-      addParticipant(participant);
-    });
-    
-    socketService.onUserLeft((data) => {
-      removeParticipant(data.user_id);
-    });
-    
-    socketService.onCursorMove((data) => {
-      updateParticipantCursor(data.user_id, data.position);
-    });
-  }, [setConnected, setCode, setLanguage, setParticipants, setCurrentUser, addParticipant, removeParticipant, updateParticipantCursor]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -130,13 +150,16 @@ export default function SessionPage() {
   }, [setLanguage]);
 
   const handleRunCode = useCallback(async () => {
+    console.log('Running code:', { language, codeLength: code.length });
     setExecuting(true);
     setExecutionResult(null);
     
     try {
       const result = await executeCode(code, language);
+      console.log('Execution result:', result);
       setExecutionResult(result);
     } catch (err) {
+      console.error('Execution error:', err);
       setExecutionResult({
         stdout: '',
         stderr: err instanceof Error ? err.message : 'Execution failed',

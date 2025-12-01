@@ -1,10 +1,14 @@
 // Python Worker using Pyodide
-declare const loadPyodide: () => Promise<PyodideInterface>;
-
 interface PyodideInterface {
   runPythonAsync: (code: string) => Promise<unknown>;
   setStdout: (options: { batched: (text: string) => void }) => void;
   setStderr: (options: { batched: (text: string) => void }) => void;
+}
+
+declare global {
+  interface Window {
+    loadPyodide: () => Promise<PyodideInterface>;
+  }
 }
 
 let pyodide: PyodideInterface | null = null;
@@ -17,8 +21,8 @@ async function initPyodide(): Promise<PyodideInterface> {
   
   pyodideLoading = (async () => {
     // Load Pyodide from CDN
-    importScripts('https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js');
-    pyodide = await loadPyodide();
+    const script = await import('https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.mjs');
+    pyodide = await script.loadPyodide();
     return pyodide;
   })();
   

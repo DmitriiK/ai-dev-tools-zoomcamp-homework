@@ -20,8 +20,27 @@ async def test_create_session(client: AsyncClient):
     assert data["language"] == "python"
     assert data["code"] == ""
     assert data["is_active"] is True
+    assert data["is_protected"] is False
     assert "id" in data
     assert "share_url" in data
+
+
+@pytest.mark.asyncio
+async def test_create_session_with_password(client: AsyncClient):
+    """Test creating a password-protected session."""
+    response = await client.post(
+        "/api/sessions",
+        json={
+            "title": "Protected Interview",
+            "language": "javascript",
+            "password": "secret123",
+        },
+    )
+    
+    assert response.status_code == 201
+    data = response.json()
+    
+    assert data["is_protected"] is True
 
 
 @pytest.mark.asyncio
@@ -72,6 +91,69 @@ async def test_get_session_not_found(client: AsyncClient):
     
     assert response.status_code == 404
     assert response.json()["detail"] == "Session not found"
+
+
+@pytest.mark.asyncio
+async def test_get_protected_session_without_password(client: AsyncClient):
+    """Test getting a protected session without password."""
+    # Create protected session
+    create_response = await client.post(
+        "/api/sessions",
+        json={
+            "title": "Protected Session",
+            "language": "python",
+            "password": "secret",
+        },
+    )
+    session_id = create_response.json()["id"]
+    
+    # Try to get without password
+    response = await client.get(f"/api/sessions/{session_id}")
+    
+    assert response.status_code == 401
+    assert "Password required" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_get_protected_session_with_password(client: AsyncClient):
+    """Test getting a protected session with correct password."""
+    # Create protected session
+    create_response = await client.post(
+        "/api/sessions",
+        json={
+            "title": "Protected Session",
+            "language": "csharp",
+            "password": "secret",
+        },
+    )
+    session_id = create_response.json()["id"]
+    
+    # Get with correct password
+    response = await client.get(f"/api/sessions/{session_id}?password=secret")
+    
+    assert response.status_code == 200
+    assert response.json()["title"] == "Protected Session"
+
+
+@pytest.mark.asyncio
+async def test_get_protected_session_wrong_password(client: AsyncClient):
+    """Test getting a protected session with wrong password."""
+    # Create protected session
+    create_response = await client.post(
+        "/api/sessions",
+        json={
+            "title": "Protected Session",
+            "language": "java",
+            "password": "secret",
+        },
+    )
+    session_id = create_response.json()["id"]
+    
+    # Get with wrong password
+    response = await client.get(f"/api/sessions/{session_id}?password=wrong")
+    
+    assert response.status_code == 401
+    assert "Incorrect password" in response.json()["detail"]
 
 
 @pytest.mark.asyncio

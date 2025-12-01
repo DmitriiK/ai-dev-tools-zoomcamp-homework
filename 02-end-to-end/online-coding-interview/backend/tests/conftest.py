@@ -33,7 +33,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(autouse=True)
 async def setup_database():
     """Setup and teardown test database."""
     async with test_engine.begin() as conn:
@@ -41,18 +41,12 @@ async def setup_database():
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
 
 
 async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
     """Override database dependency for tests."""
     async with TestSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+        yield session
 
 
 # Override the dependency

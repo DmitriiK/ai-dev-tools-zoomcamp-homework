@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from app.api.deps import SessionServiceDep
 from app.schemas.session import (
@@ -8,6 +9,7 @@ from app.schemas.session import (
     ErrorResponse,
 )
 from app.services.session import get_share_url
+from app.core.security import check_session_password
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
@@ -37,6 +39,7 @@ async def create_session(
         code=session.code,
         created_at=session.created_at,
         expires_at=session.expires_at,
+        is_protected=session.is_protected,
         is_active=session.is_active,
         share_url=get_share_url(session.id, base_url),
     )
@@ -55,6 +58,7 @@ async def get_session(
     request: Request,
     session_id: UUID,
     service: SessionServiceDep,
+    password: Optional[str] = None,
 ):
     """Get session details by ID."""
     session = await service.get_by_id(session_id)
@@ -71,6 +75,12 @@ async def get_session(
             detail="Session has expired",
         )
     
+    if not check_session_password(password, session.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Password required for this session" if password is None else "Incorrect password",
+        )
+    
     base_url = str(request.base_url).rstrip("/")
     
     return SessionResponse(
@@ -80,6 +90,7 @@ async def get_session(
         code=session.code,
         created_at=session.created_at,
         expires_at=session.expires_at,
+        is_protected=session.is_protected,
         is_active=session.is_active,
         share_url=get_share_url(session.id, base_url),
     )
@@ -118,6 +129,7 @@ async def update_session(
         code=session.code,
         created_at=session.created_at,
         expires_at=session.expires_at,
+        is_protected=session.is_protected,
         is_active=session.is_active,
         share_url=get_share_url(session.id, base_url),
     )
