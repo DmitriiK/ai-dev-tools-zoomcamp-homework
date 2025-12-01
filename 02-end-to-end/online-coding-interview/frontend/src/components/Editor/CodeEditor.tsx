@@ -104,12 +104,22 @@ export default function CodeEditor({ code, language, onChange }: CodeEditorProps
     onChange(value || '');
   };
 
-  // Initialize store with template if code is empty
+  // Initialize store with template if code is empty, or when language changes
   useEffect(() => {
-    if (!code && CODE_TEMPLATES[language]) {
+    if (CODE_TEMPLATES[language]) {
+      // Only load template on initial mount if code is empty
+      if (!code) {
+        onChange(CODE_TEMPLATES[language]);
+      }
+    }
+  }, []); // Run only on mount
+  
+  // When language changes, load the new template
+  useEffect(() => {
+    if (CODE_TEMPLATES[language]) {
       onChange(CODE_TEMPLATES[language]);
     }
-  }, [language]); // Only run when language changes or on mount
+  }, [language]); // Run when language changes
 
   // Use template if code is empty
   const displayCode = code || CODE_TEMPLATES[language] || '';
