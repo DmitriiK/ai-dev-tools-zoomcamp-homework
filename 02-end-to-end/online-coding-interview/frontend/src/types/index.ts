@@ -1,4 +1,4 @@
-export type Language = 'javascript' | 'python' | 'csharp' | 'go' | 'java';
+export type Language = 'javascript' | 'python' | 'csharp' | 'go' | 'java' | 'sql';
 
 export interface Session {
   id: string;

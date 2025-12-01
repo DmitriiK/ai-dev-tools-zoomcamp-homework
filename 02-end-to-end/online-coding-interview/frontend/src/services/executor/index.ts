@@ -190,6 +190,26 @@ export async function executeCode(code: string, language: Language): Promise<Exe
         getCSharpWorker().postMessage({ code, id });
         break;
       
+      case 'sql':
+        clearTimeout(timeout);
+        pendingExecutions.delete(id);
+        resolve({
+          stdout: `SQL (PostgreSQL) - Syntax highlighting only
+
+This language is for demonstrating SQL queries and database design.
+Code execution is not supported.
+
+Your SQL code looks well-formatted! In a real interview setting, you would:
+- Explain your query logic
+- Discuss indexing strategies
+- Talk about query optimization
+- Consider edge cases and data validation`,
+          stderr: '',
+          exitCode: 0,
+          executionTimeMs: 0,
+        });
+        break;
+      
       default:
         clearTimeout(timeout);
         pendingExecutions.delete(id);

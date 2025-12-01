@@ -17,6 +17,7 @@ const LANGUAGES: { id: Language; name: string }[] = [
   { id: 'csharp', name: 'C#' },
   { id: 'go', name: 'Go' },
   { id: 'java', name: 'Java' },
+  { id: 'sql', name: 'SQL (PostgreSQL)' },
 ];
 
 export default function Toolbar({

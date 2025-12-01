@@ -15,6 +15,7 @@ const MONACO_LANGUAGE_MAP: Record<Language, string> = {
   csharp: 'csharp',
   go: 'go',
   java: 'java',
+  sql: 'sql',
 };
 
 // Default code templates
@@ -96,6 +97,36 @@ public class Main {
         System.out.println("Sum: " + sum);
     }
 }
+`,
+  sql: `-- SQL (PostgreSQL) - Syntax highlighting only
+-- This language is for demonstrating SQL queries
+-- Code execution is not supported
+
+-- Create a sample table
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    department VARCHAR(50),
+    salary DECIMAL(10, 2),
+    hire_date DATE
+);
+
+-- Insert sample data
+INSERT INTO employees (name, department, salary, hire_date)
+VALUES 
+    ('John Doe', 'Engineering', 95000.00, '2023-01-15'),
+    ('Jane Smith', 'Marketing', 75000.00, '2023-03-20'),
+    ('Bob Johnson', 'Engineering', 105000.00, '2022-11-10');
+
+-- Query with aggregation
+SELECT 
+    department,
+    COUNT(*) as employee_count,
+    AVG(salary) as avg_salary,
+    MAX(salary) as max_salary
+FROM employees
+GROUP BY department
+ORDER BY avg_salary DESC;
 `,
 };
 
