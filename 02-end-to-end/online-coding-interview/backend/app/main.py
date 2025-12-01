@@ -6,7 +6,7 @@ import socketio
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.redis import close_redis
-from app.api.routes import sessions, languages, health
+from app.api.routes import sessions, languages, health, proxy
 from app.sockets import sio
 
 
@@ -49,6 +49,7 @@ app.add_middleware(
 app.include_router(sessions.router, prefix="/api")
 app.include_router(languages.router, prefix="/api")
 app.include_router(health.router, prefix="/api")
+app.include_router(proxy.router, prefix="/api")
 
 # Create Socket.IO ASGI app
 socket_app = socketio.ASGIApp(

@@ -3,6 +3,9 @@ import { Language, ExecutionResult } from '../../types';
 // Worker instances
 let jsWorker: Worker | null = null;
 let pyWorker: Worker | null = null;
+let goWorker: Worker | null = null;
+let javaWorker: Worker | null = null;
+let csharpWorker: Worker | null = null;
 
 // Execution timeout in milliseconds
 const EXECUTION_TIMEOUT = 10000;
@@ -74,6 +77,79 @@ function getPythonWorker(): Worker {
   return pyWorker;
 }
 
+function getGoWorker(): Worker {
+  if (!goWorker) {
+    goWorker = new Worker(
+      new URL('./go-worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    
+    goWorker.onmessage = (e) => {
+      const { id, result } = e.data;
+      console.log('Go worker response:', { id, result });
+      const pending = pendingExecutions.get(id);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        pendingExecutions.delete(id);
+        pending.resolve(result);
+      }
+    };
+    
+    goWorker.onerror = (error) => {
+      console.error('Go worker error:', error);
+    };
+  }
+  return goWorker;
+}
+
+function getJavaWorker(): Worker {
+  if (!javaWorker) {
+    javaWorker = new Worker(
+      new URL('./java-worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    
+    javaWorker.onmessage = (e) => {
+      const { id, result } = e.data;
+      const pending = pendingExecutions.get(id);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        pendingExecutions.delete(id);
+        pending.resolve(result);
+      }
+    };
+    
+    javaWorker.onerror = (error) => {
+      console.error('Java worker error:', error);
+    };
+  }
+  return javaWorker;
+}
+
+function getCSharpWorker(): Worker {
+  if (!csharpWorker) {
+    csharpWorker = new Worker(
+      new URL('./csharp-worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    
+    csharpWorker.onmessage = (e) => {
+      const { id, result } = e.data;
+      const pending = pendingExecutions.get(id);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        pendingExecutions.delete(id);
+        pending.resolve(result);
+      }
+    };
+    
+    csharpWorker.onerror = (error) => {
+      console.error('C# worker error:', error);
+    };
+  }
+  return csharpWorker;
+}
+
 export async function executeCode(code: string, language: Language): Promise<ExecutionResult> {
   const id = generateId();
   console.log('executeCode called:', { id, language, codeLength: code.length });
@@ -102,30 +178,28 @@ export async function executeCode(code: string, language: Language): Promise<Exe
         getPythonWorker().postMessage({ code, id });
         break;
       
-      case 'csharp':
       case 'go':
+        getGoWorker().postMessage({ code, id });
+        break;
+      
       case 'java':
-        // These languages require more complex WASM setup
-        // For now, return a placeholder message
-        clearTimeout(timeout);
-        pendingExecutions.delete(id);
-        resolve({
-          stdout: '',
-          stderr: `${language.toUpperCase()} execution is not yet implemented.\n` +
-                  `This would require loading the appropriate WASM runtime:\n` +
-                  `- C#: Blazor WebAssembly\n` +
-                  `- Go: TinyGo WASM\n` +
-                  `- Java: CheerpJ\n\n` +
-                  `Currently, JavaScript and Python are fully supported.`,
-          exitCode: 1,
-          executionTimeMs: 0,
-        });
+        getJavaWorker().postMessage({ code, id });
+        break;
+      
+      case 'csharp':
+        getCSharpWorker().postMessage({ code, id });
         break;
       
       default:
         clearTimeout(timeout);
         pendingExecutions.delete(id);
-        reject(new Error(`Unsupported language: ${language}`));
+        resolve({
+          stdout: '',
+          stderr: `Unsupported language: ${language}`,
+          exitCode: 1,
+          executionTimeMs: 0,
+        });
+        break;
     }
   });
 }
@@ -138,6 +212,18 @@ export function terminateWorkers(): void {
   if (pyWorker) {
     pyWorker.terminate();
     pyWorker = null;
+  }
+  if (goWorker) {
+    goWorker.terminate();
+    goWorker = null;
+  }
+  if (javaWorker) {
+    javaWorker.terminate();
+    javaWorker = null;
+  }
+  if (csharpWorker) {
+    csharpWorker.terminate();
+    csharpWorker = null;
   }
   
   // Clear all pending executions
