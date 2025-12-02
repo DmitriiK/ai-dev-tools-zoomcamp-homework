@@ -254,6 +254,51 @@ The server **never** executes user-submitted code, eliminating:
 - Server resource exhaustion attacks
 - Need for complex sandboxing on the backend
 
+## Deployment
+
+### Deploy to Render (Recommended)
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+**Quick Deploy:**
+
+1. Push your code to GitHub
+2. Create new Blueprint on [Render](https://render.com)
+3. Connect repository (Render auto-detects `render.yaml`)
+4. Update CORS_ORIGINS environment variable with your frontend URL
+5. Deploy!
+
+**Services created:**
+- PostgreSQL database (Free tier)
+- Redis instance (Free tier)
+- Backend API (Python/FastAPI)
+- Frontend (Static site)
+
+**Estimated cost:** Free tier available, or ~$25-35/month for production
+
+### Other Deployment Options
+
+- **Railway**: Similar to Render, supports Docker
+- **Fly.io**: Good for Docker-based deployments
+- **Heroku**: Traditional PaaS option
+- **AWS/GCP/Azure**: Full control, requires more setup
+
+## Running Both Client and Server Locally
+
+Instead of Docker, you can run both services with:
+
+```bash
+# Install concurrently (first time only)
+npm install
+
+# Run both services
+npm run dev
+```
+
+This uses `concurrently` to run:
+- Backend: `uvicorn` on port 8000
+- Frontend: `vite` on port 5173
+
 ## License
 
 MIT
