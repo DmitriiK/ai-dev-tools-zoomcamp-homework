@@ -1,22 +1,9 @@
-databases:
-  # PostgreSQL Database
-  - name: coding-interview-db
-    databaseName: coding_interview
-    plan: free
-    ipAllowList: []
-
 services:
-  # Redis
-  - type: redis
-    name: coding-interview-redis
-    plan: free
-    maxmemoryPolicy: noeviction
-    ipAllowList: []
-
   # Backend API
   - type: web
     name: coding-interview-backend
-    runtime: python
+    env: python
+    plan: free
     buildCommand: "cd 02-end-to-end/online-coding-interview/backend && pip install -r requirements.txt"
     startCommand: "cd 02-end-to-end/online-coding-interview/backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
     envVars:
@@ -30,15 +17,15 @@ services:
           type: redis
           property: connectionString
       - key: DEBUG
-        value: false
+        value: "false"
       - key: CORS_ORIGINS
         sync: false
-    healthCheckPath: /api/health
 
   # Frontend
   - type: web
     name: coding-interview-frontend
-    runtime: static
+    env: static
+    plan: free
     buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
     staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
     envVars:
@@ -48,3 +35,17 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+  # Redis
+  - type: redis
+    name: coding-interview-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+databases:
+  # PostgreSQL Database
+  - name: coding-interview-db
+    databaseName: coding_interview
+    plan: free
+    ipAllowList: []
