@@ -247,7 +247,7 @@ export function terminateWorkers(): void {
   }
   
   // Clear all pending executions
-  for (const [id, pending] of pendingExecutions) {
+  for (const [, pending] of pendingExecutions) {
     clearTimeout(pending.timeout);
     pending.reject(new Error('Execution cancelled'));
   }

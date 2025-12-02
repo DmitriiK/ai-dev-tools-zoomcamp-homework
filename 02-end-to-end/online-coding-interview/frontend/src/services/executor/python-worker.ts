@@ -5,12 +5,6 @@ interface PyodideInterface {
   setStderr: (options: { batched: (text: string) => void }) => void;
 }
 
-declare global {
-  interface Window {
-    loadPyodide: () => Promise<PyodideInterface>;
-  }
-}
-
 let pyodide: PyodideInterface | null = null;
 let pyodideLoading: Promise<PyodideInterface> | null = null;
 
@@ -21,9 +15,11 @@ async function initPyodide(): Promise<PyodideInterface> {
   
   pyodideLoading = (async () => {
     // Load Pyodide from CDN
+    // @ts-ignore - Dynamic import from CDN
     const script = await import('https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.mjs');
-    pyodide = await script.loadPyodide();
-    return pyodide;
+    const loadedPyodide = await script.loadPyodide();
+    pyodide = loadedPyodide;
+    return loadedPyodide as PyodideInterface;
   })();
   
   return pyodideLoading;
