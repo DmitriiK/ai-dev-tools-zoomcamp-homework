@@ -1,0 +1,18 @@
+{
+  "name": "online-coding-interview",
+  "version": "1.0.0",
+  "description": "Online Coding Interview Platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && uvicorn app.main:application --reload --host 0.0.0.0 --port 8000",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && pytest"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
