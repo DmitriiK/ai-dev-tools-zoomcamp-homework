@@ -3,8 +3,6 @@ services:
   - type: web
     name: coding-interview-backend
     env: docker
-    dockerfilePath: ./02-end-to-end/online-coding-interview/backend/Dockerfile.render
-    dockerContext: .
     plan: free
     envVars:
       - key: DATABASE_URL
