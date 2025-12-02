@@ -2,10 +2,9 @@ services:
   # Backend API
   - type: web
     name: coding-interview-backend
-    env: python
+    env: docker
+    dockerfilePath: 02-end-to-end/online-coding-interview/backend/Dockerfile
     plan: free
-    buildCommand: "cd 02-end-to-end/online-coding-interview/backend && pip install -r requirements.txt"
-    startCommand: "cd 02-end-to-end/online-coding-interview/backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -24,10 +23,10 @@ services:
   # Frontend
   - type: web
     name: coding-interview-frontend
-    env: static
+    env: node
     plan: free
-    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
-    staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
+    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build && npm install -g serve"
+    startCommand: "serve -s 02-end-to-end/online-coding-interview/frontend/dist -p $PORT"
     envVars:
       - key: VITE_API_URL
         sync: false
