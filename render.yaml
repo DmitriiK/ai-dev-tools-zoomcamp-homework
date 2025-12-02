@@ -1,18 +1,18 @@
-services:
+databases:
   # PostgreSQL Database
-  - type: pserv
-    name: coding-interview-db
-    plan: free
+  - name: coding-interview-db
     databaseName: coding_interview
-    databaseUser: postgres
-    ipAllowList: []  # Allow all IPs (required for free tier)
-    
+    user: postgres
+    plan: free
+    ipAllowList: []
+
+services:
   # Redis
   - type: redis
     name: coding-interview-redis
     plan: free
     maxmemoryPolicy: noeviction
-    ipAllowList: []  # Allow all IPs (required for free tier)
+    ipAllowList: []
 
   # Backend API
   - type: web
