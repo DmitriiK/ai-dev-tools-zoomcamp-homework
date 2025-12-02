@@ -1,7 +1,7 @@
 services:
-  # Backend API
+  # Combined Frontend + Backend
   - type: web
-    name: coding-interview-backend
+    name: coding-interview-app
     env: docker
     plan: free
     envVars:
@@ -17,18 +17,7 @@ services:
       - key: DEBUG
         value: "false"
       - key: CORS_ORIGINS
-        sync: false
-
-  # Frontend
-  - type: web
-    name: coding-interview-frontend
-    env: node
-    plan: free
-    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build && npm install -g serve"
-    startCommand: "serve -s 02-end-to-end/online-coding-interview/frontend/dist -p $PORT"
-    envVars:
-      - key: VITE_API_URL
-        sync: false
+        value: '["*"]'
 
   # Redis
   - type: redis
