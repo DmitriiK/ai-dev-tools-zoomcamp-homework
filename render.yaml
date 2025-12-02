@@ -2,7 +2,6 @@ databases:
   # PostgreSQL Database
   - name: coding-interview-db
     databaseName: coding_interview
-    user: postgres
     plan: free
     ipAllowList: []
 
