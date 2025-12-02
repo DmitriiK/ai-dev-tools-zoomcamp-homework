@@ -1,0 +1,57 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: coding-interview-db
+    env: docker
+    plan: free
+    region: oregon
+    
+  # Redis
+  - type: redis
+    name: coding-interview-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
+
+  # Backend API
+  - type: web
+    name: coding-interview-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "cd 02-end-to-end/online-coding-interview/backend && pip install -r requirements.txt"
+    startCommand: "cd 02-end-to-end/online-coding-interview/backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coding-interview-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: coding-interview-redis
+          type: redis
+          property: connectionString
+      - key: DEBUG
+        value: false
+      - key: CORS_ORIGINS
+        sync: false
+    healthCheckPath: /health
+
+  # Frontend
+  - type: web
+    name: coding-interview-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
+    staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: coding-interview-backend
+          type: web
+          property: url
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
