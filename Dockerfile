@@ -32,28 +32,36 @@ COPY 02-end-to-end/online-coding-interview/backend/ .
 # Copy built frontend from previous stage
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
-# Configure nginx to serve frontend and proxy backend
-RUN echo 'server { \
-    listen 8080; \
-    location / { \
-        root /app/frontend/dist; \
-        try_files $uri $uri/ /index.html; \
-    } \
-    location /api { \
-        proxy_pass http://localhost:8000; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-    } \
-    location /socket.io { \
-        proxy_pass http://localhost:8000; \
-        proxy_http_version 1.1; \
-        proxy_set_header Upgrade $http_upgrade; \
-        proxy_set_header Connection "upgrade"; \
-    } \
-}' > /etc/nginx/sites-available/default
+# Create startup script
+RUN echo '#!/bin/bash\n\
+PORT=${PORT:-8080}\n\
+echo "Starting on port $PORT"\n\
+cat > /etc/nginx/sites-available/default <<EOF\n\
+server {\n\
+    listen $PORT;\n\
+    location / {\n\
+        root /app/frontend/dist;\n\
+        try_files \$uri \$uri/ /index.html;\n\
+    }\n\
+    location /api {\n\
+        proxy_pass http://localhost:8000;\n\
+        proxy_set_header Host \$host;\n\
+        proxy_set_header X-Real-IP \$remote_addr;\n\
+    }\n\
+    location /socket.io {\n\
+        proxy_pass http://localhost:8000;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Upgrade \$http_upgrade;\n\
+        proxy_set_header Connection "upgrade";\n\
+    }\n\
+}\n\
+EOF\n\
+nginx -g "daemon off;" &\n\
+uvicorn app.main:application --host 0.0.0.0 --port 8000\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
-# Expose port (Render uses PORT env var)
+# Expose port
 EXPOSE 8080
 
 # Start both nginx and uvicorn
-CMD nginx && uvicorn app.main:application --host 0.0.0.0 --port 8000
+CMD ["/app/start.sh"]
