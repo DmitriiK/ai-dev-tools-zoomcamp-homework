@@ -109,9 +109,14 @@ export default function HomePage() {
                 type="text"
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (error) setError(null); // Clear error when user starts typing
+                }}
+                disabled={isCreating}
+                autoFocus
                 placeholder="e.g., Frontend Developer Interview"
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
             
@@ -123,7 +128,8 @@ export default function HomePage() {
                 id="language"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as Language)}
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isCreating}
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.id} value={lang.id}>
@@ -142,8 +148,9 @@ export default function HomePage() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isCreating}
                 placeholder="Leave empty for no password"
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
             
