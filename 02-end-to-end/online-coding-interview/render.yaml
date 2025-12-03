@@ -1,11 +1,11 @@
-services:
+databases:
   # PostgreSQL Database
-  - type: pserv
-    name: coding-interview-db
-    env: docker
+  - name: coding-interview-db
+    databaseName: coding_interview
     plan: free
     region: oregon
-    
+
+services:
   # Redis
   - type: redis
     name: coding-interview-redis
