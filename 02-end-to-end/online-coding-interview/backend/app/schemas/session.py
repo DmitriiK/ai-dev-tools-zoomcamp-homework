@@ -12,6 +12,7 @@ class Language(str, Enum):
     CSHARP = "csharp"
     GO = "go"
     JAVA = "java"
+    SQL = "sql"
 
 
 class SessionCreate(BaseModel):

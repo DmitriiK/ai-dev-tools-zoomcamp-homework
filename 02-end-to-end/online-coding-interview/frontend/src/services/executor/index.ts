@@ -7,6 +7,10 @@ let goWorker: Worker | null = null;
 let javaWorker: Worker | null = null;
 let csharpWorker: Worker | null = null;
 
+// Worker ready states
+let jsWorkerReady = false;
+let pyWorkerReady = false;
+
 // Execution timeout in milliseconds
 const EXECUTION_TIMEOUT = 10000;
 
@@ -23,13 +27,14 @@ function generateId(): string {
 
 function getJavaScriptWorker(): Worker {
   if (!jsWorker) {
+    console.log('[EXECUTOR] Creating JavaScript worker');
     jsWorker = new Worker(
       new URL('./javascript-worker.ts', import.meta.url),
       { type: 'module' }
     );
     
     jsWorker.onmessage = (e) => {
-      console.log('JS worker response:', e.data);
+      console.log('[EXECUTOR] JS worker response:', e.data);
       const { id, result } = e.data;
       const pending = pendingExecutions.get(id);
       if (pending) {
@@ -37,19 +42,26 @@ function getJavaScriptWorker(): Worker {
         pendingExecutions.delete(id);
         pending.resolve(result);
       } else {
-        console.warn('No pending execution found for id:', id);
+        console.warn('[EXECUTOR] No pending execution found for id:', id);
       }
     };
     
     jsWorker.onerror = (e) => {
-      console.error('JavaScript worker error:', e);
+      console.error('[EXECUTOR] JavaScript worker error:', e);
     };
+    
+    // Mark as ready after a small delay to ensure worker script is loaded
+    setTimeout(() => {
+      jsWorkerReady = true;
+      console.log('[EXECUTOR] JavaScript worker marked ready');
+    }, 100);
   }
   return jsWorker;
 }
 
 function getPythonWorker(): Worker {
   if (!pyWorker) {
+    console.log('[EXECUTOR] Creating Python worker');
     pyWorker = new Worker(
       new URL('./python-worker.ts', import.meta.url),
       { type: 'module' }
@@ -57,10 +69,12 @@ function getPythonWorker(): Worker {
     
     pyWorker.onmessage = (e) => {
       if (e.data.type === 'ready') {
-        console.log('Python worker ready');
+        pyWorkerReady = true;
+        console.log('[EXECUTOR] Python worker marked ready');
         return;
       }
       
+      console.log('[EXECUTOR] Python worker response:', e.data);
       const { id, result } = e.data;
       const pending = pendingExecutions.get(id);
       if (pending) {
@@ -71,7 +85,7 @@ function getPythonWorker(): Worker {
     };
     
     pyWorker.onerror = (e) => {
-      console.error('Python worker error:', e);
+      console.error('[EXECUTOR] Python worker error:', e);
     };
   }
   return pyWorker;
@@ -150,13 +164,30 @@ function getCSharpWorker(): Worker {
   return csharpWorker;
 }
 
+// Initialize workers for immediate availability
+export function initializeWorkers(language?: Language): void {
+  console.log('[EXECUTOR] initializeWorkers called with language:', language);
+  // Pre-initialize workers based on language
+  if (!language || language === 'javascript') {
+    getJavaScriptWorker();
+  } else if (language === 'python') {
+    getPythonWorker();
+  } else if (language === 'go') {
+    getGoWorker();
+  } else if (language === 'java') {
+    getJavaWorker();
+  } else if (language === 'csharp') {
+    getCSharpWorker();
+  }
+}
+
 export async function executeCode(code: string, language: Language): Promise<ExecutionResult> {
   const id = generateId();
-  console.log('executeCode called:', { id, language, codeLength: code.length });
+  console.log('[EXECUTOR] executeCode called:', { id, language, codeLength: code.length });
   
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const timeout = setTimeout(() => {
-      console.log('Execution timeout for:', id);
+      console.log('[EXECUTOR] Execution timeout for:', id);
       pendingExecutions.delete(id);
       resolve({
         stdout: '',
@@ -168,13 +199,33 @@ export async function executeCode(code: string, language: Language): Promise<Exe
     
     pendingExecutions.set(id, { resolve, reject, timeout });
     
+    // Wait for worker to be ready
+    const waitForWorker = async (checkReady: () => boolean, workerName: string, maxWait = 5000) => {
+      const start = Date.now();
+      console.log(`[EXECUTOR] Waiting for ${workerName} worker to be ready...`);
+      while (!checkReady() && Date.now() - start < maxWait) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      const elapsed = Date.now() - start;
+      if (checkReady()) {
+        console.log(`[EXECUTOR] ${workerName} worker ready after ${elapsed}ms`);
+      } else {
+        console.warn(`[EXECUTOR] ${workerName} worker NOT ready after ${elapsed}ms - proceeding anyway`);
+      }
+    };
+    
     switch (language) {
       case 'javascript':
-        console.log('Posting to JS worker:', { code, id });
+        console.log('[EXECUTOR] JS worker ready state before wait:', jsWorkerReady);
+        await waitForWorker(() => jsWorkerReady, 'JavaScript');
+        console.log('[EXECUTOR] Posting to JS worker:', { code: code.substring(0, 50) + '...', id });
         getJavaScriptWorker().postMessage({ code, id });
         break;
       
       case 'python':
+        console.log('[EXECUTOR] Python worker ready state before wait:', pyWorkerReady);
+        await waitForWorker(() => pyWorkerReady, 'Python');
+        console.log('[EXECUTOR] Posting to Python worker:', { code: code.substring(0, 50) + '...', id });
         getPythonWorker().postMessage({ code, id });
         break;
       

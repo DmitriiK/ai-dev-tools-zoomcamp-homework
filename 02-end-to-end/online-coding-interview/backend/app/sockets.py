@@ -1,5 +1,6 @@
 import socketio
 from app.core.redis import get_redis
+from app.core.database import get_db
 import json
 import uuid
 from datetime import datetime
@@ -85,9 +86,25 @@ async def join(sid, data):
     await redis.hset(f"session:{session_id}:users", sid, json.dumps(user_data))
     await redis.set(f"user:{sid}:session", session_id)
     
-    # Get current code from Redis (if any)
+    # Get current code and language from Redis (if any)
     current_code = await redis.get(f"session:{session_id}:code")
     current_language = await redis.get(f"session:{session_id}:language")
+    
+    # If not in Redis, fetch from database
+    if current_language is None:
+        from app.services.session import SessionService
+        from uuid import UUID
+        async for db in get_db():
+            service = SessionService(db)
+            session = await service.get_by_id(UUID(session_id))
+            if session:
+                current_language = session.language
+                # Cache in Redis for future use
+                await redis.set(f"session:{session_id}:language", current_language)
+                if not current_code and session.code:
+                    current_code = session.code
+                    await redis.set(f"session:{session_id}:code", current_code)
+            break
     
     # Get all participants
     participants = []

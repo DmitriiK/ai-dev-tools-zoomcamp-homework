@@ -19,7 +19,7 @@ const MONACO_LANGUAGE_MAP: Record<Language, string> = {
 };
 
 // Default code templates
-const CODE_TEMPLATES: Record<Language, string> = {
+export const CODE_TEMPLATES: Record<Language, string> = {
   javascript: `// JavaScript - Runs in Web Worker
 console.log("Hello, World!");
 

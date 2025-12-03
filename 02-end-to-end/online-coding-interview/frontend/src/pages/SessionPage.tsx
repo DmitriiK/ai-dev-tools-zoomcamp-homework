@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../store/sessionStore';
 import { getSession } from '../services/api';
 import { socketService } from '../services/socket';
-import { executeCode } from '../services/executor';
-import CodeEditor from '../components/Editor/CodeEditor';
+import { executeCode, initializeWorkers } from '../services/executor';
+import CodeEditor, { CODE_TEMPLATES } from '../components/Editor/CodeEditor';
 import OutputPanel from '../components/Output/OutputPanel';
 import Toolbar from '../components/Toolbar/Toolbar';
 import UserPresence from '../components/UserPresence/UserPresence';
@@ -129,8 +129,12 @@ export default function SessionPage() {
     }
   }, [sessionId, setSession, setLoading, setError, setupSocketListeners]);
 
-  // Load session on mount
+  // Load session on mount and initialize workers eagerly
   useEffect(() => {
+    // Initialize JavaScript and Python workers immediately (most common languages)
+    initializeWorkers('javascript');
+    initializeWorkers('python');
+    
     loadSession();
     
     return () => {
@@ -150,12 +154,16 @@ export default function SessionPage() {
   }, [setLanguage]);
 
   const handleRunCode = useCallback(async () => {
-    console.log('Running code:', { language, codeLength: code.length });
+    // If code is empty, use the template code for execution
+    // This allows users to run the default template immediately without having to edit it
+    const codeToExecute = code.trim() === '' ? (CODE_TEMPLATES[language] || '') : code;
+    
+    console.log('Running code:', { language, codeLength: codeToExecute.length, usingTemplate: code.trim() === '' });
     setExecuting(true);
     setExecutionResult(null);
     
     try {
-      const result = await executeCode(code, language);
+      const result = await executeCode(codeToExecute, language);
       console.log('Execution result:', result);
       setExecutionResult(result);
     } catch (err) {
