@@ -19,8 +19,8 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "cd backend && pip install -r requirements.txt"
-    startCommand: "cd backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
+    buildCommand: "cd 02-end-to-end/online-coding-interview/backend && pip install -r requirements.txt"
+    startCommand: "cd 02-end-to-end/online-coding-interview/backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -43,8 +43,8 @@ services:
     env: static
     region: oregon
     plan: free
-    buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: frontend/dist
+    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
+    staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
     envVars:
       - key: VITE_API_URL
         fromService:
