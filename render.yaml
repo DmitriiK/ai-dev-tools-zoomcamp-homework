@@ -42,7 +42,6 @@ services:
   - type: web
     name: coding-interview-frontend
     env: static
-    plan: free
     buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
     staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
     envVars:
