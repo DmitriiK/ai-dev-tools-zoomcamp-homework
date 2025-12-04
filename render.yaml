@@ -12,6 +12,7 @@ services:
     plan: free
     region: oregon
     maxmemoryPolicy: noeviction
+    ipAllowList: []
 
   # Backend API
   - type: web
@@ -41,7 +42,6 @@ services:
   - type: web
     name: coding-interview-frontend
     env: static
-    region: oregon
     plan: free
     buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
     staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
@@ -50,7 +50,7 @@ services:
         fromService:
           name: coding-interview-backend
           type: web
-          property: url
+          property: host
     routes:
       - type: rewrite
         source: /*
