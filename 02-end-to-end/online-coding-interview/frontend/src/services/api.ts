@@ -1,6 +1,8 @@
 import { Session, SessionCreate, LanguageInfo } from '../types';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
 
 export async function createSession(data: SessionCreate): Promise<Session> {
   const response = await fetch(`${API_BASE_URL}/sessions`, {

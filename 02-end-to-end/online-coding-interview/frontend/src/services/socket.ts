@@ -23,7 +23,8 @@ class SocketService {
     }
     
     console.log('Creating new socket connection...');
-    this.socket = io({
+    const socketUrl = import.meta.env.VITE_API_URL || '';
+    this.socket = io(socketUrl, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
     });

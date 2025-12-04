@@ -10,7 +10,8 @@ self.onmessage = async (e: MessageEvent) => {
   try {
     // Use our backend proxy to avoid CORS issues
     // Note: Backend only proxies the request, doesn't execute code
-    const response = await fetch('/api/proxy/csharp', {
+    const apiUrl = (self as any).VITE_API_URL ? `${(self as any).VITE_API_URL}/api/proxy/csharp` : '/api/proxy/csharp';
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
