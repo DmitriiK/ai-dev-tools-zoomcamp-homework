@@ -35,7 +35,7 @@ services:
       - key: DEBUG
         value: false
       - key: CORS_ORIGINS
-        value: '["https://coding-interview-frontend.onrender.com"]'
+        value: '["https://coding-interview-frontend-duw3.onrender.com"]'
     healthCheckPath: /api/health
 
   # Frontend
