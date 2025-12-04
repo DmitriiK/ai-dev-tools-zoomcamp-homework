@@ -46,10 +46,7 @@ services:
     staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: coding-interview-backend
-          type: web
-          property: host
+        value: https://coding-interview-backend-0csi.onrender.com
     routes:
       - type: rewrite
         source: /*
