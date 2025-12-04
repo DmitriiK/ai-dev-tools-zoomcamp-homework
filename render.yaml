@@ -20,7 +20,8 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "cd 02-end-to-end/online-coding-interview/backend && pip install -r requirements.txt"
+    runtime: python-3.11.0
+    buildCommand: "cd 02-end-to-end/online-coding-interview/backend && pip install --upgrade pip && pip install -r requirements.txt"
     startCommand: "cd 02-end-to-end/online-coding-interview/backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
