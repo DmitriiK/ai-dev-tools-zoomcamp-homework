@@ -35,18 +35,15 @@ services:
       - key: DEBUG
         value: false
       - key: CORS_ORIGINS
-        sync: false
+        value: '["https://coding-interview-frontend.onrender.com"]'
     healthCheckPath: /api/health
 
   # Frontend
   - type: web
     name: coding-interview-frontend
     env: static
-    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && npm run build"
+    buildCommand: "cd 02-end-to-end/online-coding-interview/frontend && npm install && VITE_API_URL=https://coding-interview-backend-0csi.onrender.com npm run build"
     staticPublishPath: 02-end-to-end/online-coding-interview/frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://coding-interview-backend-0csi.onrender.com
     routes:
       - type: rewrite
         source: /*
