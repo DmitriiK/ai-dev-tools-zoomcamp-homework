@@ -4,10 +4,10 @@ FROM node:20-alpine as frontend-builder
 WORKDIR /app/frontend
 
 # Copy frontend files
-COPY 02-end-to-end/online-coding-interview/frontend/package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci
 
-COPY 02-end-to-end/online-coding-interview/frontend/ ./
+COPY frontend/ ./
 RUN npm run build
 
 # Backend stage
@@ -23,11 +23,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY 02-end-to-end/online-coding-interview/backend/requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend application code
-COPY 02-end-to-end/online-coding-interview/backend/ .
+COPY backend/ .
 
 # Copy built frontend from previous stage
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist

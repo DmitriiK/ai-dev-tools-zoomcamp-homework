@@ -12,6 +12,7 @@ services:
     plan: free
     region: oregon
     maxmemoryPolicy: noeviction
+    ipAllowList: []
 
   # Backend API
   - type: web
@@ -19,7 +20,7 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: "cd backend && pip install -r requirements.txt"
+    buildCommand: "cd backend && pip install --upgrade pip setuptools wheel && pip install -r requirements.txt --prefer-binary"
     startCommand: "cd backend && uvicorn app.main:application --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
@@ -34,23 +35,15 @@ services:
       - key: DEBUG
         value: false
       - key: CORS_ORIGINS
-        sync: false
-    healthCheckPath: /health
+        value: '["https://coding-interview-frontend-duw3.onrender.com"]'
+    healthCheckPath: /api/health
 
   # Frontend
   - type: web
     name: coding-interview-frontend
     env: static
-    region: oregon
-    plan: free
-    buildCommand: "cd frontend && npm install && npm run build"
+    buildCommand: "cd frontend && npm install && VITE_API_URL=https://coding-interview-backend-0csi.onrender.com npm run build"
     staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          name: coding-interview-backend
-          type: web
-          property: url
     routes:
       - type: rewrite
         source: /*
